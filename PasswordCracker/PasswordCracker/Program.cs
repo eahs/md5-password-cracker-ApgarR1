@@ -34,15 +34,25 @@ namespace PasswordCracker
                 return sb.ToString();
             }
         }
-        
+
         static void Main(string[] args)
         {
             string[] hashedPasswords = File.ReadAllLines("passwords_hashed.txt");
 
             Console.WriteLine("MD5 Password Cracker v1.0");
-            
+
+            // ideas:
+            // 1. randomly select 5 letters, make them a string, convert to hash, compare (might take a while)
+            // TODO: compare
             foreach (var pass in hashedPasswords)
             {
+                string password = "";
+                for (int i = 0; i < 5; i++)
+                {
+                    password += RandomLetter();
+                }
+                string hash = md5(password);
+
                 Console.WriteLine(pass);
             }
 
@@ -50,8 +60,17 @@ namespace PasswordCracker
             // Note that hashedPasswords will need to be swapped out with an array the exact
             // same length that contains all the cracked passwords
             bool passwordsValidated = Validator.ValidateResults(hashedPasswords);
-            
+
             Console.WriteLine($"\nPasswords successfully cracked: {passwordsValidated}");
         }
-    }
+
+        public static string RandomLetter()
+        {
+            string[] alphabet = File.ReadAllLines("alphabet.txt");
+            Random rand = new Random();
+
+            return alphabet[rand.Next(0, 25)];
+        }
+
+}
 }
