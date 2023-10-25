@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.JavaScript;
 using System.Text;
 
 namespace PasswordCracker
@@ -38,39 +39,73 @@ namespace PasswordCracker
         static void Main(string[] args)
         {
             string[] hashedPasswords = File.ReadAllLines("passwords_hashed.txt");
+            Dictionary<string, string> passwords = new Dictionary<string, string>();
+            Dictionary<string, string> randomPass = new Dictionary<string, string>();
+            string[] commonWords = File.ReadAllLines("most_common.txt");
+            string[] crackedPasswords = new string[hashedPasswords.Length];
 
+            string alphabet = "abcdefghijklmnopqrstuvwxyz";
+            for (int i = 0; i < alphabet.Length; i++)
+            {
+                for (int j = 0; j < alphabet.Length; j++)
+                {
+                    for (int k = 0; k < alphabet.Length; k++)
+                    {
+                        for (int l = 0; l < alphabet.Length; l++)
+                        {
+                            for (int m = 0; m < alphabet.Length; m++)
+                            {
+                                string password = alphabet[i].ToString() + alphabet[j].ToString() + alphabet[k].ToString() + alphabet[l].ToString() + alphabet[m].ToString();
+                                string hash = md5(password);
+                                randomPass.Add(hash, password);
+                            }
+                        }
+                    }
+                }
+            }
+            
             Console.WriteLine("MD5 Password Cracker v1.0");
 
-            // ideas:
-            // 1. randomly select 5 letters, make them a string, convert to hash, compare (might take a while)
-            // TODO: compare
-            foreach (var pass in hashedPasswords)
-            {
-                string password = "";
-                for (int i = 0; i < 5; i++)
-                {
-                    password += RandomLetter();
-                }
-                string hash = md5(password);
+            // "ABCD12342332233232" -> "money"
 
-                Console.WriteLine(pass);
+            // ideas:
+            // 1. randomly select 5 letters, make them a string, convert to hash, compare (takes way too long, all the passwords are likely actual words)
+            // 2. find most common 5 letter words, compare hashes, if none work then try random 5 letter strings as backup (maybe)
+            // TODO: make #2
+
+            foreach (var word in commonWords)
+            {
+                var hash = md5(word);
+
+                passwords.Add(hash, word);
+
+            }
+
+            int a = 0;
+            foreach (var hash in hashedPasswords)
+            {
+                if (passwords.ContainsKey(hash)!)
+                {
+                    string pass = passwords[hash];
+                    Console.WriteLine($"{hash} - {pass}");
+                    crackedPasswords[a] = pass;
+                    a++;
+                }
+                else if (randomPass.ContainsKey(hash)!)
+                {
+                    string pass = randomPass[hash];
+                    Console.WriteLine($"{hash} - {pass}");
+                    crackedPasswords[a] = pass;
+                    a++;
+                }
             }
 
             // Use this method to test if you managed to correctly crack all the passwords
             // Note that hashedPasswords will need to be swapped out with an array the exact
             // same length that contains all the cracked passwords
-            bool passwordsValidated = Validator.ValidateResults(hashedPasswords);
+            bool passwordsValidated = Validator.ValidateResults(crackedPasswords);
 
             Console.WriteLine($"\nPasswords successfully cracked: {passwordsValidated}");
         }
-
-        public static string RandomLetter()
-        {
-            string[] alphabet = File.ReadAllLines("alphabet.txt");
-            Random rand = new Random();
-
-            return alphabet[rand.Next(0, 25)];
-        }
-
 }
 }
